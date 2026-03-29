@@ -2,86 +2,29 @@
 #define APPLICATION_H
 
 #include "WeatherLog.h"
+#include <map>        // ✅ ADD
+#include "BST.h"      // ✅ ADD
 
-/**
- * @class Application
- * @brief Controls menu system and program execution.
- *
- * Responsibilities:
- * - Display menu
- * - Handle user input
- * - Call Stats functions
- * - Write output file
- *
- * @author Vernice Foong
- * @version 02
- */
 class Application
 {
 public:
-    /**
-     * @brief Constructor that uses the loaded WeatherLog.
-     *
-     * @param log Reference to the weather log.
-     */
     Application(WeatherLog& log);
-
-    /**
-     * @brief Starts the program and controls the main menu loop.
-     */
     void Run();
 
 private:
-    WeatherLog& m_log;  //Ref to the loaded WeatherLog.
+    WeatherLog& m_log;
 
-    /**
-     * @brief Displays the main menu options to the user.
-     */
+    std::multimap<int, WeatherRec> m_dataMap;  // ✅ ADD
+    BST<int> m_tree;                           // ✅ ADD
+
     void DisplayMenu() const;
-
-    /**
-     * @brief Reads an integer input from the user.
-     *
-     * @return The integer entered by the user.
-     */
     int ReadInt() const;
-
-    /**
-     * @brief Returns the English name of a given month.
-     *
-     * @param month Month number (1�12).
-     * @return Pointer to constant month name string.
-     */
     const char* GetMonthName(int month) const;
 
-    /**
-     * @brief Menu Option 1:
-     * Computes and displays wind speed mean and sample standard deviation
-     * for a specified month and year.
-     */
     void DoOption1();
-
-    /**
-     * @brief Menu Option 2:
-     * Computes and displays temperature mean and sample standard deviation
-     * for each month of a specified year.
-     */
     void DoOption2();
-
-    /**
-     * @brief Menu Option 3:
-     * Computes and displays total solar radiation (kWh/m^2)
-     * for each month of a specified year.
-     */
     void DoOption3();
-
-    /**
-     * @brief Menu Option 4:
-     * Generates WindTempSolar.csv containing monthly
-     * wind, temperature, and solar statistics for a specified year.
-     */
     void DoOption4();
-
     void DoBST();
 };
 

@@ -51,8 +51,21 @@ double CalculateMAD(const WeatherLog& log, int year, int month, int type, double
 
 // Constructor for reference to WeatherLog.
 Application::Application(WeatherLog& log)
-    : m_log(log) {}
+    : m_log(log)
+{
+    for (int i = 0; i < m_log.GetSize(); i++)
+    {
+        const WeatherRec& rec = m_log.GetRecord(i);
+        int month = rec.GetDate().GetMonth();
 
+        m_dataMap.insert({month, rec});
+
+        if (!m_tree.Search(month))
+        {
+            m_tree.Insert(month);
+        }
+    }
+}
 // Runs the main menu loop.
 void Application::Run()
 {
@@ -143,20 +156,48 @@ void Application::DoOption1()
         return;
     }
 
-    double mean = UtilityStats::MeanWind(m_log, year, month);
+    double sum = 0;
+int count = 0;
 
-    if (mean == 0.0)
-    {
-        std::cout << GetMonthName(month) << " " << year << ": No Data\n";
-    }
-    else
-    {
-        double sd = UtilityStats::SDWind(m_log, year, month, mean);
+auto range = m_dataMap.equal_range(month);
 
-        std::cout << GetMonthName(month) << " " << year << ":\n";
-        std::cout << "Average speed: " << mean << " km/h\n";
-        std::cout << "Sample stdev: " << sd << "\n";
+for (auto it = range.first; it != range.second; ++it)
+{
+    const WeatherRec& rec = it->second;
+
+    if (rec.GetDate().GetYear() == year && rec.HasSpeed())
+    {
+        sum += rec.GetSpeed();
+        count++;
     }
+}
+
+if (count == 0)
+{
+    std::cout << GetMonthName(month) << " " << year << ": No Data\n";
+    return;
+}
+
+double mean = sum / count;
+
+// standard deviation
+double variance = 0;
+
+for (auto it = range.first; it != range.second; ++it)
+{
+    const WeatherRec& rec = it->second;
+
+    if (rec.GetDate().GetYear() == year && rec.HasSpeed())
+    {
+        variance += (rec.GetSpeed() - mean) * (rec.GetSpeed() - mean);
+    }
+}
+
+double sd = std::sqrt(variance / count);
+
+std::cout << GetMonthName(month) << " " << year << ":\n";
+std::cout << "Average speed: " << mean << " km/h\n";
+std::cout << "Sample stdev: " << sd << "\n";
 }
 
 // Menu option 2 for temperature stats.
@@ -356,19 +397,13 @@ void Application::DoOption4()
 }
 
 
-void PrintWeather(const WeatherRec& rec)
+void PrintMonth(const int& month)
 {
-    std::cout << rec << std::endl;
+    std::cout << "Month: " << month << std::endl;
 }
+
 void Application::DoBST()
 {
-    BST<WeatherRec> tree;
-
-    for (int i = 0; i < m_log.GetSize(); i++)
-    {
-        tree.Insert(m_log.GetRecord(i));    
-    }
-
-    std::cout << "\n--- BST Inorder Traversal ---\n";
-    tree.Inorder(PrintWeather);
+    std::cout << "\n--- BST Months ---\n";
+    m_tree.Inorder(PrintMonth);
 }

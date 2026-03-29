@@ -5,6 +5,50 @@
 #include "BST.h"
 #include <cmath>
 
+
+double CalculateMAD(const WeatherLog& log, int year, int month, int type, double mean)
+{
+    double sum = 0;
+    int count = 0;
+
+    for (int i = 0; i < log.GetSize(); i++)
+    {
+        const WeatherRec& rec = log.GetRecord(i);
+
+        if (rec.GetDate().GetYear() == year &&
+            rec.GetDate().GetMonth() == month)
+        {
+            double value = 0;
+            bool valid = false;
+
+            if (type == 1 && rec.HasSpeed())
+            {
+                value = rec.GetSpeed();
+                valid = true;
+            }
+            else if (type == 2 && rec.HasTemp())
+            {
+                value = rec.GetTemperature();
+                valid = true;
+            }
+            else if (type == 3 && rec.HasSolar())
+            {
+                value = rec.GetSolarRadiation();
+                valid = true;
+            }
+
+            if (valid)
+            {
+                sum += std::abs(value - mean);
+                count++;
+            }
+        }
+    }
+
+    if (count == 0) return 0;
+    return sum / count;
+}
+
 // Constructor for reference to WeatherLog.
 Application::Application(WeatherLog& log)
     : m_log(log) {}
@@ -277,20 +321,25 @@ void Application::DoOption4()
             if (meanWind != 0.0)
             {
                 double sdWind = UtilityStats::SDWind(m_log, year, month, meanWind);
-                out << meanWind << "(" << sdWind << ")";
+                double madWind = CalculateMAD(m_log, year, month, 1, meanWind);
+
+                out << meanWind << "(" << sdWind << "," << madWind << ")";
             }
             out << ",";
 
             if (meanTemp != 0.0)
             {
                 double sdTemp = UtilityStats::SDTemp(m_log, year, month, meanTemp);
-                out << meanTemp << "(" << sdTemp << ")";
-            }
+                double madTemp = CalculateMAD(m_log, year, month, 2, meanTemp);
+
+                out << meanTemp << "(" << sdTemp << "," << madTemp << ")";
+}
             out << ",";
 
             if (totalSolar != 0.0)
             {
-                out << totalSolar;
+                double madSolar = CalculateMAD(m_log, year, month, 3, totalSolar);
+                out << totalSolar << "(0," << madSolar << ")";
             }
 
             out << "\n";
